@@ -1,0 +1,2306 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+	<head>
+		<meta charset="UTF-8">
+		<link rel="stylesheet" href="css/iconfont.css" />
+		<link rel="stylesheet" href="css/backtohome.css" />
+		<script type="text/javascript" src="js/jquery-3.4.1.min.js" ></script>
+		<title>Weather</title>
+		<style type="text/css">
+			body {
+				background: url(img/背景.jpg);
+				background-size:cover;
+				/*background-attachment:fixed;*/
+				background-repeat: no-repeat;
+			}
+			.sidebar {
+				display: inline-block;
+				padding: 0px;
+				margin: 100px 0 0 150px;
+				background-color: transparent;
+				color: white;
+			}
+			.sidebar ul {
+				list-style: none;
+				text-align: center;
+				padding: 0px;
+				margin: 0px;
+				background-color: transparent;
+			}
+			.sidebar ul li {
+				width: 200px;
+				height: 50px;
+				line-height: 50px;
+				font-size: 18px;
+				background-color: transparent;
+				border-bottom: 1px white solid;
+			}
+			div.datachart {
+				width: 900px;
+				height: 400px;
+				/* border: 1px #138496 solid; */
+				margin: -357px 0 0 450px;
+			}
+			.search {
+				border: 1px #000000 solid;
+				border-radius: 20px;
+				background-color: whitesmoke;
+				height: 40px;
+				width: 600px;
+				margin: 20px auto;
+				line-height: 40px;
+			}
+			.search_input input#longitude {
+				width: 250px;
+				height: 30px;
+				margin-left: 15px;
+				border: none;
+				outline: none;
+				background-color: transparent;
+				text-align: center;
+			}
+			.search_input input#latitude {
+				width: 250px;
+				height: 30px;
+				margin-left: 290px;
+				border: none;
+				outline: none;
+				background-color: transparent;
+				position: relative;
+				top: -40px;
+				text-align: center;
+			}
+			.search_icon button {
+				width: 30px;
+			  	height: 30px;
+			  	background: url(img/搜索.png) no-repeat;
+			  	background-color: transparent;
+			  	background-size: 28px 28px;
+			  	float: right;
+			  	display: inline-block;
+			  	margin-right: 15px;
+			  	border: none;
+			  	outline: none;
+			  	margin-top: -75px;
+			}
+			.col-md-12 {
+			    position: relative;
+			    min-height: 1px;
+			    padding-right: 15px;
+			    padding-left: 15px;
+			    top: 40px;
+			}
+			.col-md-12 back {
+			    position: fixed;
+			    min-height: 1px;
+			    padding-right: 15px;
+			    padding-left: 15px;
+			    right: 10px;
+			}
+			.primary-button {
+			    margin-bottom: 40px;
+			    /*border: 1px white solid;*/
+			    width: 150px;
+			    height: 40px;
+			    margin: 10px auto;
+			    background-color: rgba(250,250,250,0.3);
+			    border-radius: 20px;
+			    line-height: 40px;
+			    position: fixed;
+			    bottom: 50px;
+			    right: 20px;
+			    text-align: center;
+			}
+			a.scroll-top {
+				color: goldenrod;
+				text-decoration: none;
+			}
+		</style>
+	</head>
+
+	<body>
+	
+		<div style="height:60px;"></div>
+		<div class="search">
+			<form action="/stationsearch" method="post" autocomplete="off" >
+				<div class="search_input">
+					<input id="longitude" name="longitude" type="text" placeholder="请输入目标查询地点的经度数值" autocomplete="off" />
+					<span>—</span>
+				</div>
+				<div class="search_input">
+					<input id="latitude" name="latitude" type="text" placeholder="请输入目标查询地点的纬度数值" autocomplete="off" />
+				</div>
+				<div class="search_icon">
+					<button id="button" type="submit" />
+				</div>
+			</form>
+		</div>
+		<div style="height:20px;"></div>
+
+		<div class="sidebar" style="border:1px white solid; width:200px; height:auto; border-radius: 5px;">
+			<ul>
+				<li id="li_airtemperature"><span class="icon iconfont">&#xe620;</span>&nbsp;空气温度</li>
+				<li id="li_dewtemperature"><span class="icon iconfont">&#xe65e;</span>&nbsp;露点温度</li>
+				<li id="li_wind"><span class="icon iconfont">&#xe617;</span>&nbsp;风向风速</li>
+				<li id="li_cloudheight"><span class="icon iconfont">&#xe61d;</span>&nbsp;云层高度</li>
+				<li id="li_airpressure"><span class="icon iconfont">&#xe892;</span>&nbsp;大气压强</li>
+				<li id="li_visibility" style="border-bottom:none;"><span class="icon iconfont">&#xe651;</span>&nbsp;&nbsp;能&nbsp;见&nbsp;度</li>
+			</ul>
+		</div>
+		<div class="datachart" id="airtemperature"></div>
+		<div class="datachart" id="dewtemperature"></div>
+		<div class="datachart" id="wind">
+			<div id="winddirect"></div>
+			<div id="windspeed"></div>
+		</div>
+		<div class="datachart" id="cloudheight"></div>
+		<div class="datachart" id="airpressure"></div>
+		<div class="datachart" id="visibility"></div>
+		
+		<div class="col-md-12 back">
+            <a href="/templates/index.html" class="scroll-top">
+               	<div class="primary-button">Back To Home&nbsp;&nbsp;<span class="icon iconfont">&#xe6f7;</span></div>
+            </a>
+        </div>
+		<script type="text/javascript" src="js/echarts.js"></script>
+		<script type="text/javascript">
+			var myChart;
+			$(function(){
+				$('.datachart').hide();
+			    $('#airtemperature').show();
+				myChart = echarts.init(document.getElementById('airtemperature'));
+				var oridates = [];
+				var orimaxs = [];
+				var orimins = [];
+				var oriaverages = [];
+				$.getJSON('visibilityYear',function(data){
+					getAirTemperature(data);
+					$.each(data, function(index, item){
+						oridates.push(item.category);
+						orimaxs.push(item.max);
+						orimins.push(item.min);
+						oriaverages.push(item.average);
+					});
+					myChart.setOption({
+						xAxis : {
+							data : oridates
+						},
+						series : [ {
+							type : 'line',
+							data : orimaxs
+						},
+						{
+							type : 'line',
+							data : orimins
+						},
+						{
+							type : 'line',
+							data : oriaverages
+						} ]
+					});
+				});
+			    
+				$('#li_airtemperature').click(function(){
+					$('.datachart').hide();
+					$('#airtemperature').show();
+					myChart = echarts.init(document.getElementById('airtemperature'));
+					var dates = [];
+					var maxs = [];
+					var mins = [];
+					var averages = [];
+					$.getJSON('/visibilityYear',function(data){
+						getAirTemperature(data);
+						$.each(data, function(index, item){
+							dates.push(item.category);
+							maxs.push(item.max);
+							mins.push(item.min);
+							averages.push(item.average);
+						});
+						myChart.setOption({
+							xAxis : {
+								data : dates
+							},
+							series : [ {
+								type : 'line',
+								data : maxs
+							},
+							{
+								type : 'line',
+								data : mins
+							},
+							{
+								type : 'line',
+								data : averages
+							} ]
+						});
+					});
+				});
+				$('#li_dewtemperature').click(function(){
+					$('.datachart').hide();
+				    $('#dewtemperature').show();
+					myChart = echarts.init(document.getElementById('dewtemperature'));
+					var dates = [];
+					var maxs = [];
+					var mins = [];
+					var averages = [];
+					$.getJSON('-------------------------',function(data){
+						getDewTemperature(data);
+						$.each(data, function(index, item){
+							dates.push(item.category);
+							maxs.push(item.max);
+							mins.push(item.min);
+							averages.push(item.average);
+						});
+						myChart.setOption({
+							xAxis : {
+								data : dates
+							},
+							series : [ {
+								type : 'line',
+								data : maxs
+							},
+							{
+								type : 'line',
+								data : mins
+							},
+							{
+								type : 'line',
+								data : averages
+							} ]
+						});
+					});
+				});
+				$('#li_wind').click(function(){
+					$('.datachart').hide();
+				    $('#wind').show();
+					myChart = echarts.init(document.getElementById('wind'));
+					var dates = [];
+					var maxs = [];
+					var mins = [];
+					var averages = [];
+					$.getJSON('-------------------------',function(data){
+						getWind(data);
+						$.each(data, function(index, item){
+							dates.push(item.category);
+							maxs.push(item.max);
+							mins.push(item.min);
+							averages.push(item.average);
+						});
+						myChart.setOption({
+							xAxis : {
+								data : dates
+							},
+							series : [ {
+								type : 'line',
+								data : maxs
+							},
+							{
+								type : 'line',
+								data : mins
+							},
+							{
+								type : 'line',
+								data : averages
+							} ]
+						});
+					});
+				});
+				$('#li_cloudheight').click(function(){
+					$('.datachart').hide();
+				    $('#cloudheight').show();
+					myChart = echarts.init(document.getElementById('cloudheight'));
+					var dates = [];
+					var maxs = [];
+					var mins = [];
+					var averages = [];
+					$.getJSON('-------------------------',function(data){
+						getCloudHeight(data);
+						$.each(data, function(index, item){
+							dates.push(item.category);
+							maxs.push(item.max);
+							mins.push(item.min);
+							averages.push(item.average);
+						});
+						myChart.setOption({
+							xAxis : {
+								data : dates
+							},
+							series : [ {
+								type : 'line',
+								data : maxs
+							},
+							{
+								type : 'line',
+								data : mins
+							},
+							{
+								type : 'line',
+								data : averages
+							} ]
+						});
+					});
+				});
+				$('#li_airpressure').click(function(){
+					$('.datachart').hide();
+				    $('#airpressure').show();
+					myChart = echarts.init(document.getElementById('airpressure'));
+					var dates = [];
+					var maxs = [];
+					var mins = [];
+					var averages = [];
+					$.getJSON('/airPressureYear',function(data){
+						getAirPressure(data);
+						$.each(data, function(index, item){
+							dates.push(item.date);
+							maxs.push(item.maxairpressure);
+							mins.push(item.minairpressure);
+							averages.push(item.avgairpressure);
+						});
+						myChart.setOption({
+							xAxis : {
+								data : dates
+							},
+							series : [ {
+								type : 'line',
+								data : maxs
+							},
+							{
+								type : 'line',
+								data : mins
+							},
+							{
+								type : 'line',
+								data : averages
+							} ]
+						});
+					});
+				});
+				$('#li_visibility').click(function(){
+					$('.datachart').hide();
+				    $('#visibility').show();
+					myChart = echarts.init(document.getElementById('visibility'));
+					var dates = [];
+					var maxs = [];
+					var mins = [];
+					var averages = [];
+					$.getJSON('/visibilityYear',function(data){
+						getVisibility(data);
+						$.each(data, function(index, item){
+							dates.push(item.date);
+							maxs.push(item.maxvisibility);
+							mins.push(item.minvisibility);
+							averages.push(item.avgvisibility);
+						});
+						myChart.setOption({
+							xAxis : {
+								data : dates
+							},
+							series : [ {
+								type : 'line',
+								data : maxs
+							},
+							{
+								type : 'line',
+								data : mins
+							},
+							{
+								type : 'line',
+								data : averages
+							} ]
+						});
+					});
+				});
+			});
+			
+			function getAirTemperature(result){
+				myChart = echarts.init(document.getElementById('airtemperature'));
+				var option = {
+					title: {
+						text: '空气温度',
+						textStyle: {color:"white"}
+					},
+					// 工具箱
+					toolbox: {
+						show: true,
+						right: 15,
+						feature: {
+							dataView: {show: true},
+							restore: {show: true},
+							dataZoom: {show: true},
+							saveAsImage: {show: true},
+							magicType: {type: ['line', 'bar']},
+							myreturn: {
+								show: true,
+								title:'返回上级',
+								icon:'image://img/返回.png' ,
+								option:{},
+			                   	onclick:function(option1) {
+			                        if(option1.option.xAxis[0].data[0].length == 10){
+			                        	myChart.clear();
+			                        	var dates = [];
+										var maxs = [];
+										var mins = [];
+										var averages = [];
+									    $.getJSON('json/monthTemperature.json', function(data){
+									    	getAirTemperature(data);
+											$.each(data, function(index, item){
+												dates.push(item.category);
+												maxs.push(item.max);
+												mins.push(item.min);
+												averages.push(item.average);
+											});
+											myChart.setOption({
+												xAxis : {
+													data : dates
+												},
+												series : [ {
+													type : 'line',
+													data : maxs
+												},
+												{
+													type : 'line',
+													data : mins
+												},
+												{
+													type : 'line',
+													data : averages
+												} ]
+											});
+									    });
+			                        }
+			                        else if(option1.option.xAxis[0].data[0].length == 7){
+			                        	myChart.clear();
+			                        	var dates = [];
+										var maxs = [];
+										var mins = [];
+										var averages = [];
+									    $.getJSON('json/yearTemperature.json', function(data){
+									    	getAirTemperature(data);
+											$.each(data, function(index, item){
+												dates.push(item.category);
+												maxs.push(item.max);
+												mins.push(item.min);
+												averages.push(item.average);
+											});
+											myChart.setOption({
+												xAxis : {
+													data : dates
+												},
+												series : [ {
+													type : 'line',
+													data : maxs
+												},
+												{
+													type : 'line',
+													data : mins
+												},
+												{
+													type : 'line',
+													data : averages
+												} ]
+											});
+									    });
+			                        }
+			                    }
+							},
+							my2019: {
+								show: true,
+								title:'查看2019',
+								icon:'image://img/2019.png' ,
+								option:{},
+			                   	onclick:function(option1) {
+			                   		var dates = [];
+									var maxs = [];
+									var mins = [];
+									var averages = [];
+									$.getJSON('./2019monthTemperature.json',function(data){
+										getAirTemperature(data);
+										$.each(data, function(index, item){
+											dates.push(item.category);
+											maxs.push(item.max);
+											mins.push(item.min);
+											averages.push(item.average);
+										});
+										myChart.setOption({
+											xAxis : {
+												data : dates
+											},
+											series : [ {
+												type : 'line',
+												data : maxs
+											},
+											{
+												type : 'line',
+												data : mins
+											},
+											{
+												type : 'line',
+												data : averages
+											} ]
+										});
+									});
+								}
+							}
+						}
+					},
+					tooltip: {
+						trigger: 'axis'
+					},
+					legend: {
+						data: ['最高温度','最低温度','平均温度'],
+						textStyle: {color:"white"}
+					},
+					xAxis: {
+						data: [],
+						axisLine:{
+				          	lineStyle:{color:'white',}
+				      	},
+					},
+					yAxis: {
+						axisLabel : {
+		                	formatter: '{value} °C'
+		           		},
+						axisLine:{
+				          	lineStyle:{color:'white',}
+				      	},
+					},
+					series: [
+					{
+						name: '最高温度',
+						type: 'line',
+						color: 'orange',
+						data: [],
+						markPoint: {
+							data: [{
+									type: 'max',
+									name: '最大值',
+									itemStyle: {normal: {color: 'red'}},
+								}
+							]
+						},
+						markLine: {
+							data: [{
+								type: 'average',
+								name: '平均值',
+								itemStyle: {normal: {color: 'green'}},
+							}]
+						}
+					},
+					{
+						name: '最低温度',
+						type: 'line',
+						color: 'powderblue',
+						data: [],
+						markPoint: {
+							data: [{
+									type: 'min',
+									name: '最小值',
+									symbol: 'diamond',
+									itemStyle: {normal: {color: 'blue'}},
+								}
+							]
+						},
+						markLine: {
+							data: [{
+								type: 'average',
+								name: '平均值',
+								itemStyle: {normal: {color: 'green'}},
+							}]
+						}
+					},
+					{
+						name: '平均温度',
+						type: 'line',
+						color: 'antiquewhite',
+						data: [],
+						markPoint: {
+							data: [{
+									type: 'max',
+									name: '最大值',
+									itemStyle: {normal: {color: 'red'}},
+								},
+								{
+									type: 'min',
+									name: '最小值',
+									symbol: 'diamond',
+									itemStyle: {normal: {color: 'blue'}},
+								}
+							]
+						},
+						markLine: {
+							data: [{
+								type: 'average',
+								name: '平均值',
+								itemStyle: {normal: {color: 'green'}},
+							}]
+						}
+					}]
+				}
+				myChart.setOption(option);
+				myChart.on('click', function (params) {
+					console.log(params);
+					if (params.name.length == 4 && params.name != "2019") {
+					    var dates = [];
+						var maxs = [];
+						var mins = [];
+						var averages = [];
+					    $.getJSON('./monthTemperature.json', function(data){
+					    	getAirTemperature(data);
+							$.each(data, function(index, item){
+								dates.push(item.category);
+								maxs.push(item.max);
+								mins.push(item.min);
+								averages.push(item.average);
+							});
+							myChart.setOption({
+								xAxis : {
+									data : dates
+								},
+								series : [ {
+									type : 'line',
+									data : maxs
+								},
+								{
+									type : 'line',
+									data : mins
+								},
+								{
+									type : 'line',
+									data : averages
+								} ]
+							});
+					    });
+					}
+					else if (params.name.length == 7 && params.name.substr(0,4) != "2019") {
+					    var dates = [];
+						var maxs = [];
+						var mins = [];
+						var averages = [];
+					    $.getJSON('./dateTemperature.json', function(data){
+					    	getAirTemperature(data);
+							$.each(data, function(index, item){
+								dates.push(item.category);
+								maxs.push(item.max);
+								mins.push(item.min);
+								averages.push(item.average);
+							});
+							myChart.setOption({
+								xAxis : {
+									data : dates
+								},
+								series : [ {
+									type : 'line',
+									data : maxs
+								},
+								{
+									type : 'line',
+									data : mins
+								},
+								{
+									type : 'line',
+									data : averages
+								} ]
+							});
+					    });
+					}
+					else if (params.name.length == 7 && params.name.substr(0,4) == "2019") {
+						var dates = [];
+						var maxs = [];
+						var mins = [];
+						var averages = [];
+					    $.getJSON('./2019dateTemperature.json', function(data){
+					    	getAirTemperature(data);
+							$.each(data, function(index, item){
+								dates.push(item.category);
+								maxs.push(item.max);
+								mins.push(item.min);
+								averages.push(item.average);
+							});
+							myChart.setOption({
+								xAxis : {
+									data : dates
+								},
+								series : [ {
+									type : 'line',
+									data : maxs
+								},
+								{
+									type : 'line',
+									data : mins
+								},
+								{
+									type : 'line',
+									data : averages
+								} ]
+							});
+					    });
+					}
+				});
+			}
+			function getDewTemperature(result){
+				myChart = echarts.init(document.getElementById('dewtemperature'));
+				var option = {
+					title: {
+						text: '露点温度',
+						textStyle: {color:"white"}
+					},
+					// 工具箱
+					toolbox: {
+						show: true,
+						right: 15,
+						feature: {
+							dataView: {show: true},
+							restore: {show: true},
+							dataZoom: {show: true},
+							saveAsImage: {show: true},
+							magicType: {type: ['line', 'bar']},
+							myreturn: {
+								show: true,
+								title:'返回上级',
+								icon:'image://img/返回.png' ,
+								option:{},
+			                   	onclick:function(option1) {
+			                        if(option1.option.xAxis[0].data[0].length == 10){
+			                        	myChart.clear();
+			                        	var dates = [];
+										var maxs = [];
+										var mins = [];
+										var averages = [];
+									    $.getJSON('json/monthTemperature.json', function(data){
+									    	getAirTemperature(data);
+											$.each(data, function(index, item){
+												dates.push(item.category);
+												maxs.push(item.max);
+												mins.push(item.min);
+												averages.push(item.average);
+											});
+											myChart.setOption({
+												xAxis : {
+													data : dates
+												},
+												series : [ {
+													type : 'line',
+													data : maxs
+												},
+												{
+													type : 'line',
+													data : mins
+												},
+												{
+													type : 'line',
+													data : averages
+												} ]
+											});
+									    });
+			                        }
+			                        else if(option1.option.xAxis[0].data[0].length == 7){
+			                        	myChart.clear();
+			                        	var dates = [];
+										var maxs = [];
+										var mins = [];
+										var averages = [];
+									    $.getJSON('json/yearTemperature.json', function(data){
+									    	getAirTemperature(data);
+											$.each(data, function(index, item){
+												dates.push(item.category);
+												maxs.push(item.max);
+												mins.push(item.min);
+												averages.push(item.average);
+											});
+											myChart.setOption({
+												xAxis : {
+													data : dates
+												},
+												series : [ {
+													type : 'line',
+													data : maxs
+												},
+												{
+													type : 'line',
+													data : mins
+												},
+												{
+													type : 'line',
+													data : averages
+												} ]
+											});
+									    });
+			                        }
+			                    }
+							},
+							my2019: {
+								show: true,
+								title:'查看2019',
+								icon:'image://img/2019.png' ,
+								option:{},
+			                   	onclick:function(option1) {
+			                   		var dates = [];
+									var maxs = [];
+									var mins = [];
+									var averages = [];
+									$.getJSON('./2019monthTemperature.json',function(data){
+										getAirTemperature(data);
+										$.each(data, function(index, item){
+											dates.push(item.category);
+											maxs.push(item.max);
+											mins.push(item.min);
+											averages.push(item.average);
+										});
+										myChart.setOption({
+											xAxis : {
+												data : dates
+											},
+											series : [ {
+												type : 'line',
+												data : maxs
+											},
+											{
+												type : 'line',
+												data : mins
+											},
+											{
+												type : 'line',
+												data : averages
+											} ]
+										});
+									});
+								}
+							}
+						}
+					},
+					tooltip: {
+						trigger: 'axis'
+					},
+					legend: {
+						data: ['最高温度','最低温度','平均温度'],
+						textStyle: {color:"white"}
+					},
+					xAxis: {
+						data: [],
+						axisLine:{
+				          	lineStyle:{color:'white',}
+				      	},
+					},
+					yAxis: {
+						axisLabel : {
+		                	formatter: '{value} °C'
+		           		},
+						axisLine:{
+				          	lineStyle:{color:'white',}
+				      	},
+					},
+					series: [
+					{
+						name: '最高温度',
+						type: 'line',
+						color: 'orange',
+						data: [],
+						markPoint: {
+							data: [{
+									type: 'max',
+									name: '最大值',
+									itemStyle: {normal: {color: 'red'}},
+								}
+							]
+						},
+						markLine: {
+							data: [{
+								type: 'average',
+								name: '平均值',
+								itemStyle: {normal: {color: 'green'}},
+							}]
+						}
+					},
+					{
+						name: '最低温度',
+						type: 'line',
+						color: 'honeydew',
+						data: [],
+						markPoint: {
+							data: [{
+									type: 'min',
+									name: '最小值',
+									symbol: 'diamond',
+									itemStyle: {normal: {color: 'blue'}},
+								}
+							]
+						},
+						markLine: {
+							data: [{
+								type: 'average',
+								name: '平均值',
+								itemStyle: {normal: {color: 'green'}},
+							}]
+						}
+					},
+					{
+						name: '平均温度',
+						type: 'line',
+						color: 'antiquewhite',
+						data: [],
+						markPoint: {
+							data: [{
+									type: 'max',
+									name: '最大值',
+									itemStyle: {normal: {color: 'red'}},
+								},
+								{
+									type: 'min',
+									name: '最小值',
+									symbol: 'diamond',
+									itemStyle: {normal: {color: 'blue'}},
+								}
+							]
+						},
+						markLine: {
+							data: [{
+								type: 'average',
+								name: '平均值',
+								itemStyle: {normal: {color: 'green'}},
+							}]
+						}
+					}]
+				}
+				myChart.setOption(option);
+				myChart.on('click', function (params) {
+					console.log(params);
+					if (params.name.length == 4 && params.name != "2019") {
+					    var dates = [];
+						var maxs = [];
+						var mins = [];
+						var averages = [];
+					    $.getJSON('./monthTemperature.json', function(data){
+					    	getAirTemperature(data);
+							$.each(data, function(index, item){
+								dates.push(item.category);
+								maxs.push(item.max);
+								mins.push(item.min);
+								averages.push(item.average);
+							});
+							myChart.setOption({
+								xAxis : {
+									data : dates
+								},
+								series : [ {
+									type : 'line',
+									data : maxs
+								},
+								{
+									type : 'line',
+									data : mins
+								},
+								{
+									type : 'line',
+									data : averages
+								} ]
+							});
+					    });
+					}
+					else if (params.name.length == 7 && params.name.substr(0,4) != "2019") {
+					    var dates = [];
+						var maxs = [];
+						var mins = [];
+						var averages = [];
+					    $.getJSON('./dateTemperature.json', function(data){
+					    	getAirTemperature(data);
+							$.each(data, function(index, item){
+								dates.push(item.category);
+								maxs.push(item.max);
+								mins.push(item.min);
+								averages.push(item.average);
+							});
+							myChart.setOption({
+								xAxis : {
+									data : dates
+								},
+								series : [ {
+									type : 'line',
+									data : maxs
+								},
+								{
+									type : 'line',
+									data : mins
+								},
+								{
+									type : 'line',
+									data : averages
+								} ]
+							});
+					    });
+					}
+					else if (params.name.length == 7 && params.name.substr(0,4) == "2019") {
+						var dates = [];
+						var maxs = [];
+						var mins = [];
+						var averages = [];
+					    $.getJSON('./2019dateTemperature.json', function(data){
+					    	getAirTemperature(data);
+							$.each(data, function(index, item){
+								dates.push(item.category);
+								maxs.push(item.max);
+								mins.push(item.min);
+								averages.push(item.average);
+							});
+							myChart.setOption({
+								xAxis : {
+									data : dates
+								},
+								series : [ {
+									type : 'line',
+									data : maxs
+								},
+								{
+									type : 'line',
+									data : mins
+								},
+								{
+									type : 'line',
+									data : averages
+								} ]
+							});
+					    });
+					}
+				});
+			}
+			function getWind(result){
+				myChart = echarts.init(document.getElementById('wind'));
+				var option = {
+					title: {
+						text: '风向风速',
+						textStyle: {color:"white"}
+					},
+					// 工具箱
+					toolbox: {
+						show: true,
+						right: 15,
+						feature: {
+							dataView: {show: true},
+							restore: {show: true},
+							dataZoom: {show: true},
+							saveAsImage: {show: true},
+							magicType: {type: ['line', 'bar']},
+							myreturn: {
+								show: true,
+								title:'返回上级',
+								icon:'image://img/返回.png' ,
+								option:{},
+			                   	onclick:function(option1) {
+			                        if(option1.option.xAxis[0].data[0].length == 10){
+			                        	myChart.clear();
+			                        	var dates = [];
+										var maxs = [];
+										var mins = [];
+										var averages = [];
+									    $.getJSON('./monthTemperature.json', function(data){
+									    	getAirTemperature(data);
+											$.each(data, function(index, item){
+												dates.push(item.category);
+												maxs.push(item.max);
+												mins.push(item.min);
+												averages.push(item.average);
+											});
+											myChart.setOption({
+												xAxis : {
+													data : dates
+												},
+												series : [ {
+													type : 'line',
+													data : maxs
+												},
+												{
+													type : 'line',
+													data : mins
+												},
+												{
+													type : 'line',
+													data : averages
+												} ]
+											});
+									    });
+			                        }
+			                        else if(option1.option.xAxis[0].data[0].length == 7){
+			                        	myChart.clear();
+			                        	var dates = [];
+										var maxs = [];
+										var mins = [];
+										var averages = [];
+									    $.getJSON('./yearTemperature.json', function(data){
+									    	getAirTemperature(data);
+											$.each(data, function(index, item){
+												dates.push(item.category);
+												maxs.push(item.max);
+												mins.push(item.min);
+												averages.push(item.average);
+											});
+											myChart.setOption({
+												xAxis : {
+													data : dates
+												},
+												series : [ {
+													type : 'line',
+													data : maxs
+												},
+												{
+													type : 'line',
+													data : mins
+												},
+												{
+													type : 'line',
+													data : averages
+												} ]
+											});
+									    });
+			                        }
+			                    }
+							},
+							my2019: {
+								show: true,
+								title:'查看2019',
+								icon:'image://img/2019.png' ,
+								option:{},
+			                   	onclick:function(option1) {
+			                   		var dates = [];
+									var maxs = [];
+									var mins = [];
+									var averages = [];
+									$.getJSON('./2019monthTemperature.json',function(data){
+										getAirTemperature(data);
+										$.each(data, function(index, item){
+											dates.push(item.category);
+											maxs.push(item.max);
+											mins.push(item.min);
+											averages.push(item.average);
+										});
+										myChart.setOption({
+											xAxis : {
+												data : dates
+											},
+											series : [ {
+												type : 'line',
+												data : maxs
+											},
+											{
+												type : 'line',
+												data : mins
+											},
+											{
+												type : 'line',
+												data : averages
+											} ]
+										});
+									});
+								}
+							}
+						}
+					},
+					tooltip: {
+						trigger: 'axis'
+					},
+					legend: {
+						data: ['最高风速','最低风速','平均风速'],
+						textStyle: {color:"white"}
+					},
+					xAxis: {
+						data: [],
+						axisLine:{
+				          	lineStyle:{color:'white',}
+				      	},
+					},
+					yAxis: {
+						axisLabel : {
+		                	formatter: '{value} m/s'
+		           		},
+						axisLine:{
+				          	lineStyle:{color:'white',}
+				      	},
+					},
+					series: [
+					{
+						name: '最高风速',
+						type: 'line',
+						color: 'orange',
+						data: [],
+						markPoint: {
+							data: [{
+									type: 'max',
+									name: '最大值',
+									itemStyle: {normal: {color: 'red'}},
+								}
+							]
+						},
+						markLine: {
+							data: [{
+								type: 'average',
+								name: '平均值',
+								itemStyle: {normal: {color: 'green'}},
+							}]
+						}
+					},
+					{
+						name: '最低风速',
+						type: 'line',
+						color: 'honeydew',
+						data: [],
+						markPoint: {
+							data: [{
+									type: 'min',
+									name: '最小值',
+									symbol: 'diamond',
+									itemStyle: {normal: {color: 'blue'}},
+								}
+							]
+						},
+						markLine: {
+							data: [{
+								type: 'average',
+								name: '平均值',
+								itemStyle: {normal: {color: 'green'}},
+							}]
+						}
+					},
+					{
+						name: '平均风速',
+						type: 'line',
+						color: 'antiquewhite',
+						data: [],
+						markPoint: {
+							data: [{
+									type: 'max',
+									name: '最大值',
+									itemStyle: {normal: {color: 'red'}},
+								},
+								{
+									type: 'min',
+									name: '最小值',
+									symbol: 'diamond',
+									itemStyle: {normal: {color: 'blue'}},
+								}
+							]
+						},
+						markLine: {
+							data: [{
+								type: 'average',
+								name: '平均值',
+								itemStyle: {normal: {color: 'green'}},
+							}]
+						}
+					}]
+				}
+				myChart.setOption(option);
+				myChart.on('click', function (params) {
+					console.log(params);
+					if (params.name.length == 4 && params.name != "2019") {
+					    var dates = [];
+						var maxs = [];
+						var mins = [];
+						var averages = [];
+					    $.getJSON('./monthTemperature.json', function(data){
+					    	getAirTemperature(data);
+							$.each(data, function(index, item){
+								dates.push(item.category);
+								maxs.push(item.max);
+								mins.push(item.min);
+								averages.push(item.average);
+							});
+							myChart.setOption({
+								xAxis : {
+									data : dates
+								},
+								series : [ {
+									type : 'line',
+									data : maxs
+								},
+								{
+									type : 'line',
+									data : mins
+								},
+								{
+									type : 'line',
+									data : averages
+								} ]
+							});
+					    });
+					}
+					else if (params.name.length == 7 && params.name.substr(0,4) != "2019") {
+					    var dates = [];
+						var maxs = [];
+						var mins = [];
+						var averages = [];
+					    $.getJSON('./dateTemperature.json', function(data){
+					    	getAirTemperature(data);
+							$.each(data, function(index, item){
+								dates.push(item.category);
+								maxs.push(item.max);
+								mins.push(item.min);
+								averages.push(item.average);
+							});
+							myChart.setOption({
+								xAxis : {
+									data : dates
+								},
+								series : [ {
+									type : 'line',
+									data : maxs
+								},
+								{
+									type : 'line',
+									data : mins
+								},
+								{
+									type : 'line',
+									data : averages
+								} ]
+							});
+					    });
+					}
+					else if (params.name.length == 7 && params.name.substr(0,4) == "2019") {
+						var dates = [];
+						var maxs = [];
+						var mins = [];
+						var averages = [];
+					    $.getJSON('./2019dateTemperature.json', function(data){
+					    	getAirTemperature(data);
+							$.each(data, function(index, item){
+								dates.push(item.category);
+								maxs.push(item.max);
+								mins.push(item.min);
+								averages.push(item.average);
+							});
+							myChart.setOption({
+								xAxis : {
+									data : dates
+								},
+								series : [ {
+									type : 'line',
+									data : maxs
+								},
+								{
+									type : 'line',
+									data : mins
+								},
+								{
+									type : 'line',
+									data : averages
+								} ]
+							});
+					    });
+					}
+				});
+			}
+			function getCloudHeight(result){
+				myChart = echarts.init(document.getElementById('cloudheight'));
+				var option = {
+					title: {
+						text: '最低云层高度',
+						textStyle: {color:"white"}
+					},
+					// 工具箱
+					toolbox: {
+						show: true,
+						right: 15,
+						feature: {
+							dataView: {show: true},
+							restore: {show: true},
+							dataZoom: {show: true},
+							saveAsImage: {show: true},
+							magicType: {type: ['line', 'bar']},
+							myreturn: {
+								show: true,
+								title:'返回上级',
+								icon:'image://img/返回.png' ,
+								option:{},
+			                   	onclick:function(option1) {
+			                        if(option1.option.xAxis[0].data[0].length == 10){
+			                        	myChart.clear();
+			                        	var dates = [];
+										var maxs = [];
+										var mins = [];
+										var averages = [];
+									    $.getJSON('./monthTemperature.json', function(data){
+									    	getAirTemperature(data);
+											$.each(data, function(index, item){
+												dates.push(item.category);
+												maxs.push(item.max);
+												mins.push(item.min);
+												averages.push(item.average);
+											});
+											myChart.setOption({
+												xAxis : {
+													data : dates
+												},
+												series : [ {
+													type : 'line',
+													data : maxs
+												},
+												{
+													type : 'line',
+													data : mins
+												},
+												{
+													type : 'line',
+													data : averages
+												} ]
+											});
+									    });
+			                        }
+			                        else if(option1.option.xAxis[0].data[0].length == 7){
+			                        	myChart.clear();
+			                        	var dates = [];
+										var maxs = [];
+										var mins = [];
+										var averages = [];
+									    $.getJSON('./yearTemperature.json', function(data){
+									    	getAirTemperature(data);
+											$.each(data, function(index, item){
+												dates.push(item.category);
+												maxs.push(item.max);
+												mins.push(item.min);
+												averages.push(item.average);
+											});
+											myChart.setOption({
+												xAxis : {
+													data : dates
+												},
+												series : [ {
+													type : 'line',
+													data : maxs
+												},
+												{
+													type : 'line',
+													data : mins
+												},
+												{
+													type : 'line',
+													data : averages
+												} ]
+											});
+									    });
+			                        }
+			                    }
+							},
+							my2019: {
+								show: true,
+								title:'查看2019',
+								icon:'image://img/2019.png' ,
+								option:{},
+			                   	onclick:function(option1) {
+			                   		var dates = [];
+									var maxs = [];
+									var mins = [];
+									var averages = [];
+									$.getJSON('./2019monthTemperature.json',function(data){
+										getAirTemperature(data);
+										$.each(data, function(index, item){
+											dates.push(item.category);
+											maxs.push(item.max);
+											mins.push(item.min);
+											averages.push(item.average);
+										});
+										myChart.setOption({
+											xAxis : {
+												data : dates
+											},
+											series : [ {
+												type : 'line',
+												data : maxs
+											},
+											{
+												type : 'line',
+												data : mins
+											},
+											{
+												type : 'line',
+												data : averages
+											} ]
+										});
+									});
+								}
+							}
+						}
+					},
+					tooltip: {
+						trigger: 'axis'
+					},
+					legend: {
+						data: ['最大高度','最小高度','平均高度'],
+						textStyle: {color:"white"}
+					},
+					xAxis: {
+						data: [],
+						axisLine:{
+				          	lineStyle:{color:'white',}
+				      	},
+					},
+					yAxis: {
+						axisLabel : {
+		                	formatter: '{value} °C'
+		           		},
+						axisLine:{
+				          	lineStyle:{color:'white',}
+				      	},
+					},
+					series: [
+					{
+						name: '最大高度',
+						type: 'line',
+						color: 'orange',
+						data: [],
+						markPoint: {
+							data: [{
+									type: 'max',
+									name: '最大值',
+									itemStyle: {normal: {color: 'red'}},
+								}
+							]
+						},
+						markLine: {
+							data: [{
+								type: 'average',
+								name: '平均值',
+								itemStyle: {normal: {color: 'green'}},
+							}]
+						}
+					},
+					{
+						name: '最小高度',
+						type: 'line',
+						color: 'honeydew',
+						data: [],
+						markPoint: {
+							data: [{
+									type: 'min',
+									name: '最小值',
+									symbol: 'diamond',
+									itemStyle: {normal: {color: 'blue'}},
+								}
+							]
+						},
+						markLine: {
+							data: [{
+								type: 'average',
+								name: '平均值',
+								itemStyle: {normal: {color: 'green'}},
+							}]
+						}
+					},
+					{
+						name: '平均高度',
+						type: 'line',
+						color: 'antiquewhite',
+						data: [],
+						markPoint: {
+							data: [{
+									type: 'max',
+									name: '最大值',
+									itemStyle: {normal: {color: 'red'}},
+								},
+								{
+									type: 'min',
+									name: '最小值',
+									symbol: 'diamond',
+									itemStyle: {normal: {color: 'blue'}},
+								}
+							]
+						},
+						markLine: {
+							data: [{
+								type: 'average',
+								name: '平均值',
+								itemStyle: {normal: {color: 'green'}},
+							}]
+						}
+					}]
+				}
+				myChart.setOption(option);
+				myChart.on('click', function (params) {
+					console.log(params);
+					if (params.name.length == 4 && params.name != "2019") {
+					    var dates = [];
+						var maxs = [];
+						var mins = [];
+						var averages = [];
+					    $.getJSON('./monthTemperature.json', function(data){
+					    	getAirTemperature(data);
+							$.each(data, function(index, item){
+								dates.push(item.category);
+								maxs.push(item.max);
+								mins.push(item.min);
+								averages.push(item.average);
+							});
+							myChart.setOption({
+								xAxis : {
+									data : dates
+								},
+								series : [ {
+									type : 'line',
+									data : maxs
+								},
+								{
+									type : 'line',
+									data : mins
+								},
+								{
+									type : 'line',
+									data : averages
+								} ]
+							});
+					    });
+					}
+					else if (params.name.length == 7 && params.name.substr(0,4) != "2019") {
+					    var dates = [];
+						var maxs = [];
+						var mins = [];
+						var averages = [];
+					    $.getJSON('./dateTemperature.json', function(data){
+					    	getAirTemperature(data);
+							$.each(data, function(index, item){
+								dates.push(item.category);
+								maxs.push(item.max);
+								mins.push(item.min);
+								averages.push(item.average);
+							});
+							myChart.setOption({
+								xAxis : {
+									data : dates
+								},
+								series : [ {
+									type : 'line',
+									data : maxs
+								},
+								{
+									type : 'line',
+									data : mins
+								},
+								{
+									type : 'line',
+									data : averages
+								} ]
+							});
+					    });
+					}
+					else if (params.name.length == 7 && params.name.substr(0,4) == "2019") {
+						var dates = [];
+						var maxs = [];
+						var mins = [];
+						var averages = [];
+					    $.getJSON('./2019dateTemperature.json', function(data){
+					    	getAirTemperature(data);
+							$.each(data, function(index, item){
+								dates.push(item.category);
+								maxs.push(item.max);
+								mins.push(item.min);
+								averages.push(item.average);
+							});
+							myChart.setOption({
+								xAxis : {
+									data : dates
+								},
+								series : [ {
+									type : 'line',
+									data : maxs
+								},
+								{
+									type : 'line',
+									data : mins
+								},
+								{
+									type : 'line',
+									data : averages
+								} ]
+							});
+					    });
+					}
+				});
+			}
+			function getAirPressure(result){
+				myChart = echarts.init(document.getElementById('airpressure'));
+				var option = {
+					title: {
+						text: '大气压强',
+						textStyle: {color:"white"}
+					},
+					// 工具箱
+					toolbox: {
+						show: true,
+						right: 15,
+						feature: {
+							dataView: {show: true},
+							restore: {show: true},
+							dataZoom: {show: true},
+							saveAsImage: {show: true},
+							magicType: {type: ['line', 'bar']},
+							myreturn: {
+								show: true,
+								title:'返回上级',
+								icon:'image://img/返回.png' ,
+								option:{},
+			                   	onclick:function(option1) {
+			                        if(option1.option.xAxis[0].data[0].length == 8){
+			                        	myChart.clear();
+			                        	var dates = [];
+										var maxs = [];
+										var mins = [];
+										var averages = [];
+									    $.getJSON('/airPressureMonth', function(data){
+									    	getAirPressure(data);
+											$.each(data, function(index, item){
+												dates.push(item.date);
+												maxs.push(item.maxairpressure);
+												mins.push(item.minairpressure);
+												averages.push(item.avgairpressure);
+											});
+											myChart.setOption({
+												xAxis : {
+													data : dates
+												},
+												series : [ {
+													type : 'line',
+													data : maxs
+												},
+												{
+													type : 'line',
+													data : mins
+												},
+												{
+													type : 'line',
+													data : averages
+												} ]
+											});
+									    });
+			                        }
+			                        else if(option1.option.xAxis[0].data[0].length == 6){
+			                        	myChart.clear();
+			                        	var dates = [];
+										var maxs = [];
+										var mins = [];
+										var averages = [];
+									    $.getJSON('/airPressureYear', function(data){
+									    	getAirPressure(data);
+											$.each(data, function(index, item){
+												dates.push(item.date);
+												maxs.push(item.maxairpressure);
+												mins.push(item.minairpressure);
+												averages.push(item.avgairpressure);
+											});
+											myChart.setOption({
+												xAxis : {
+													data : dates
+												},
+												series : [ {
+													type : 'line',
+													data : maxs
+												},
+												{
+													type : 'line',
+													data : mins
+												},
+												{
+													type : 'line',
+													data : averages
+												} ]
+											});
+									    });
+			                        }
+			                    }
+							},
+							my2019: {
+								show: true,
+								title:'查看2019',
+								icon:'image://img/2019.png' ,
+								option:{},
+			                   	onclick:function(option1) {
+			                   		var dates = [];
+									var maxs = [];
+									var mins = [];
+									var averages = [];
+									$.getJSON('/airPressureMonth', function(data){
+										getAirTemperature(data);
+										$.each(data, function(index, item){
+											dates.push(item.date);
+											maxs.push(item.maxairpressure);
+											mins.push(item.minairpressure);
+											averages.push(item.avgairpressure);
+										});
+										myChart.setOption({
+											xAxis : {
+												data : dates
+											},
+											series : [ {
+												type : 'line',
+												data : maxs
+											},
+											{
+												type : 'line',
+												data : mins
+											},
+											{
+												type : 'line',
+												data : averages
+											} ]
+										});
+									});
+								}
+							}
+						}
+					},
+					tooltip: {
+						trigger: 'axis'
+					},
+					legend: {
+						data: ['最大气压','最小气压','平均气压'],
+						textStyle: {color:"white"}
+					},
+					xAxis: {
+						data: [],
+						axisLine:{
+				          	lineStyle:{color:'white',}
+				      	},
+					},
+					yAxis: {
+						axisLabel : {
+		                	formatter: '{value} Pa'
+		           		},
+						axisLine:{
+				          	lineStyle:{color:'white',}
+				      	},
+					},
+					series: [
+					{
+						name: '最大气压',
+						type: 'line',
+						color: 'orange',
+						data: [],
+						markPoint: {
+							data: [{
+									type: 'max',
+									name: '最大值',
+									itemStyle: {normal: {color: 'red'}},
+								}
+							]
+						},
+						markLine: {
+							data: [{
+								type: 'average',
+								name: '平均值',
+								itemStyle: {normal: {color: 'green'}},
+							}]
+						}
+					},
+					{
+						name: '最小气压',
+						type: 'line',
+						color: 'honeydew',
+						data: [],
+						markPoint: {
+							data: [{
+									type: 'min',
+									name: '最小值',
+									symbol: 'diamond',
+									itemStyle: {normal: {color: 'blue'}},
+								}
+							]
+						},
+						markLine: {
+							data: [{
+								type: 'average',
+								name: '平均值',
+								itemStyle: {normal: {color: 'green'}},
+							}]
+						}
+					},
+					{
+						name: '平均气压',
+						type: 'line',
+						color: 'antiquewhite',
+						data: [],
+						markPoint: {
+							data: [{
+									type: 'max',
+									name: '最大值',
+									itemStyle: {normal: {color: 'red'}},
+								},
+								{
+									type: 'min',
+									name: '最小值',
+									symbol: 'diamond',
+									itemStyle: {normal: {color: 'blue'}},
+								}
+							]
+						},
+						markLine: {
+							data: [{
+								type: 'average',
+								name: '平均值',
+								itemStyle: {normal: {color: 'green'}},
+							}]
+						}
+					}]
+				}
+				myChart.setOption(option);
+				myChart.on('click', function (params) {
+					console.log(params);
+					if (params.name.length == 4 && params.name != "2019") {
+					    var dates = [];
+						var maxs = [];
+						var mins = [];
+						var averages = [];
+					    $.getJSON('/airPressureMonth', {"year": params.name}, function(data){
+					    	getAirPressure(data);
+							$.each(data, function(index, item){
+								dates.push(item.date);
+								maxs.push(item.maxairpressure);
+								mins.push(item.minairpressure);
+								averages.push(item.avgairpressure);
+							});
+							myChart.setOption({
+								xAxis : {
+									data : dates
+								},
+								series : [ {
+									type : 'line',
+									data : maxs
+								},
+								{
+									type : 'line',
+									data : mins
+								},
+								{
+									type : 'line',
+									data : averages
+								} ]
+							});
+					    });
+					}
+					else if (params.name.length == 6 && params.name.substr(0,4) == "2019") {
+						var dates = [];
+						var maxs = [];
+						var mins = [];
+						var averages = [];
+					    $.getJSON('/airPressureDate', function(data){
+					    	getAirPressure(data);
+							$.each(data, function(index, item){
+								dates.push(item.date);
+								maxs.push(item.maxairpressure);
+								mins.push(item.minairpressure);
+								averages.push(item.avgairpressure);
+							});
+							myChart.setOption({
+								xAxis : {
+									data : dates
+								},
+								series : [ {
+									type : 'line',
+									data : maxs
+								},
+								{
+									type : 'line',
+									data : mins
+								},
+								{
+									type : 'line',
+									data : averages
+								} ]
+							});
+					    });
+					}
+				});
+			}
+			function getVisibility(result){
+				myChart = echarts.init(document.getElementById('visibility'));
+				var option = {
+					title: {
+						text: '能见度',
+						textStyle: {color:"white"}
+					},
+					// 工具箱
+					toolbox: {
+						show: true,
+						right: 15,
+						feature: {
+							dataView: {show: true},
+							restore: {show: true},
+							dataZoom: {show: true},
+							saveAsImage: {show: true},
+							magicType: {type: ['line', 'bar']},
+							myreturn: {
+								show: true,
+								title:'返回上级',
+								icon:'image://img/返回.png' ,
+								option:{},
+			                   	onclick:function(option1) {
+			                        if(option1.option.xAxis[0].data[0].length == 8){
+			                        	myChart.clear();
+			                        	var dates = [];
+										var maxs = [];
+										var mins = [];
+										var averages = [];
+									    $.getJSON('/visibilityMonth', function(data){
+									    	getVisibility(data);
+											$.each(data, function(index, item){
+												dates.push(item.date);
+												maxs.push(item.maxvisibility);
+												mins.push(item.minvisibility);
+												averages.push(item.avgvisibility);
+											});
+											myChart.setOption({
+												xAxis : {
+													data : dates
+												},
+												series : [ {
+													type : 'line',
+													data : maxs
+												},
+												{
+													type : 'line',
+													data : mins
+												},
+												{
+													type : 'line',
+													data : averages
+												} ]
+											});
+									    });
+			                        }
+			                        else if(option1.option.xAxis[0].data[0].length == 6){
+			                        	myChart.clear();
+			                        	var dates = [];
+										var maxs = [];
+										var mins = [];
+										var averages = [];
+									    $.getJSON('/visibilityYear', function(data){
+									    	getVisibility(data);
+											$.each(data, function(index, item){
+												dates.push(item.date);
+												maxs.push(item.maxvisibility);
+												mins.push(item.minvisibility);
+												averages.push(item.avgvisibility);
+											});
+											myChart.setOption({
+												xAxis : {
+													data : dates
+												},
+												series : [ {
+													type : 'line',
+													data : maxs
+												},
+												{
+													type : 'line',
+													data : mins
+												},
+												{
+													type : 'line',
+													data : averages
+												} ]
+											});
+									    });
+			                        }
+			                    }
+							},
+							my2019: {
+								show: true,
+								title:'查看2019',
+								icon:'image://img/2019.png' ,
+								option:{},
+			                   	onclick:function(option1) {
+			                   		var dates = [];
+									var maxs = [];
+									var mins = [];
+									var averages = [];
+									$.getJSON('/visibilityMonth',function(data){
+										getVisibility(data);
+										$.each(data, function(index, item){
+											dates.push(item.dates);
+											maxs.push(item.maxvisibility);
+											mins.push(item.minvisibility);
+											averages.push(item.avgvisibility);
+										});
+										myChart.setOption({
+											xAxis : {
+												data : dates
+											},
+											series : [ {
+												type : 'line',
+												data : maxs
+											},
+											{
+												type : 'line',
+												data : mins
+											},
+											{
+												type : 'line',
+												data : averages
+											} ]
+										});
+									});
+								}
+							}
+						}
+					},
+					tooltip: {
+						trigger: 'axis'
+					},
+					legend: {
+						data: ['最大能见','最小能见','平均能见'],
+						textStyle: {color:"white"}
+					},
+					xAxis: {
+						data: [],
+						axisLine:{
+				          	lineStyle:{color:'white',}
+				      	},
+					},
+					yAxis: {
+						axisLabel : {
+		                	formatter: '{value} m'
+		           		},
+						axisLine:{
+				          	lineStyle:{color:'white',}
+				      	},
+					},
+					series: [
+					{
+						name: '最大能见',
+						type: 'line',
+						color: 'orange',
+						data: [],
+						markPoint: {
+							data: [{
+									type: 'max',
+									name: '最大值',
+									itemStyle: {normal: {color: 'red'}},
+								}
+							]
+						},
+						markLine: {
+							data: [{
+								type: 'average',
+								name: '平均值',
+								itemStyle: {normal: {color: 'green'}},
+							}]
+						}
+					},
+					{
+						name: '最小能见',
+						type: 'line',
+						color: 'honeydew',
+						data: [],
+						markPoint: {
+							data: [{
+									type: 'min',
+									name: '最小值',
+									symbol: 'diamond',
+									itemStyle: {normal: {color: 'blue'}},
+								}
+							]
+						},
+						markLine: {
+							data: [{
+								type: 'average',
+								name: '平均值',
+								itemStyle: {normal: {color: 'green'}},
+							}]
+						}
+					},
+					{
+						name: '平均能见',
+						type: 'line',
+						color: 'antiquewhite',
+						data: [],
+						markPoint: {
+							data: [{
+									type: 'max',
+									name: '最大值',
+									itemStyle: {normal: {color: 'red'}},
+								},
+								{
+									type: 'min',
+									name: '最小值',
+									symbol: 'diamond',
+									itemStyle: {normal: {color: 'blue'}},
+								}
+							]
+						},
+						markLine: {
+							data: [{
+								type: 'average',
+								name: '平均值',
+								itemStyle: {normal: {color: 'green'}},
+							}]
+						}
+					}]
+				}
+				myChart.setOption(option);
+				myChart.on('click', function (params) {
+					if (params.name.length == 4 && params.name != "2019") {
+					    var dates = [];
+						var maxs = [];
+						var mins = [];
+						var averages = [];
+					    $.getJSON('/visibilityMonth', {"year": params.name}, function(data){
+					    	getVisibility(data);
+							$.each(data, function(index, item){
+								dates.push(item.date);
+								maxs.push(item.maxvisibility);
+								mins.push(item.minvisibility);
+								averages.push(item.avgvisibility);
+							});
+							console.log(dates);
+							console.log(maxs);
+							console.log(mins);
+							console.log(averages);
+							myChart.setOption({
+								xAxis : {
+									data : dates,
+								},
+								series : [ {
+									type : 'line',
+									data : maxs,
+								},
+								{
+									type : 'line',
+									data : mins,
+								},
+								{
+									type : 'line',
+									data : averages,
+								} ]
+							});
+					    });
+					}
+					else if (params.name.length == 6 && params.name.substr(0,4) == "2019") {
+						var dates = [];
+						var maxs = [];
+						var mins = [];
+						var averages = [];
+					    $.getJSON('/visibilityMonth', {"year":params.name.substr(0,4)}, function(data){
+					    	getVisibility(data);
+							$.each(data, function(index, item){
+								dates.push(item.date);
+								maxs.push(item.maxvisibility);
+								mins.push(item.minvisibility);
+								averages.push(item.avgvisibility);
+							});
+							myChart.setOption({
+								xAxis : {
+									data : dates
+								},
+								series : [ {
+									type : 'line',
+									data : maxs
+								},
+								{
+									type : 'line',
+									data : mins
+								},
+								{
+									type : 'line',
+									data : averages
+								} ]
+							});
+					    });
+					}
+				});
+			}
+		</script>
+	</body>
+</html>

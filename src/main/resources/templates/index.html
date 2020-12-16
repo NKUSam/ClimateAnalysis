@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<link rel="stylesheet" href="css/backtotop.css" />
+		<script type="text/javascript" src="js/jquery-3.4.1.min.js" ></script>
+		<script src="http://api.map.baidu.com/api?v=2.0&ak=53oVIOgmSIejwV7EfphPgTynOZbIiVYu"></script>
+        <script src="js/echarts.js"></script>
+        <script type="text/javascript" src="js/china.js" ></script>
+		<title>Index</title>
+		<style>
+			* {
+			    margin: 0;
+			    padding: 0;
+			    font-family: 'Open Sans', arial, sans-serif;
+			}
+			body {
+				background: url(img/背景.jpg);
+				background-size:cover;
+				/*background-attachment:fixed;*/
+				background-repeat: no-repeat;
+			}
+			*, *::after, *::before {
+			    -webkit-box-sizing: border-box;
+			    -moz-box-sizing: border-box;
+			    box-sizing: border-box;
+			}
+			section.map {
+			    padding: auto;
+			    margin: 0px auto;
+			    height: 600px;
+			}
+			div#map {
+				width: 1100px;
+				height: 504.8px;
+				margin: auto;
+			}
+			footer {
+		    	text-align: center;
+			    background-color: transparent;
+			    padding: 60px 0px;
+			    display: block;
+			}
+			.col-md-12 {
+			    position: relative;
+			    min-height: 1px;
+			    padding-right: 15px;
+			    padding-left: 15px;
+			    top: 40px;
+			}
+			.col-md-12 back {
+			    position: fixed;
+			    min-height: 1px;
+			    padding-right: 15px;
+			    padding-left: 15px;
+			    right: 10px;
+			}
+			.primary-button {
+			    margin-bottom: 40px;
+			    /*border: 1px white solid;*/
+			    width: 150px;
+			    height: 40px;
+			    margin: 10px auto;
+			    background-color: rgba(250,250,250,0.3);
+			    border-radius: 20px;
+			    line-height: 40px;
+			    position: fixed;
+			    bottom: 50px;
+			    right: 20px;
+			    text-align: center;
+			}
+			a.scroll-top {
+				color: goldenrod;
+				text-decoration: none;
+			}
+			.search {
+				border: 1px #000000 solid;
+				border-radius: 20px;
+				background-color: whitesmoke;
+				height: 40px;
+				width: 600px;
+				margin: 20px auto;
+				line-height: 40px;
+			}
+			.search_input input#longitude {
+				width: 250px;
+				height: 30px;
+				margin-left: 15px;
+				border: none;
+				outline: none;
+				background-color: transparent;
+				text-align: center;
+			}
+			.search_input input#latitude {
+				width: 250px;
+				height: 30px;
+				margin-left: 290px;
+				border: none;
+				outline: none;
+				background-color: transparent;
+				position: relative;
+				top: -40px;
+				text-align: center;
+			}
+			.search_icon {
+				width: 30px;
+			  	height: 30px;
+			}
+			.search_icon button#button {
+				width: 30px;
+			  	height: 30px;
+			  	background: url(img/搜索.png) no-repeat;
+			  	background-color: transparent;
+			  	background-size: 28px 28px;
+			  	float: right;
+			  	display: inline-block;
+			  	border: none;
+			  	outline: none;
+			  	position: relative;
+			  	top: -75px;
+			  	left: 550px;
+			}
+		</style>
+	</head>
+	<body>
+		
+		<div style="height:120px;"></div>
+		
+		<div class="search">
+			<form action="/stationsearch" method="post" autocomplete="off" >
+				<div class="search_input">
+					<input id="longitude" name="longitude" type="text" placeholder="请输入目标查询地点的经度数值" autocomplete="off" />
+					<span>—</span>
+				</div>
+				<div class="search_input">
+					<input id="latitude" name="latitude" type="text" placeholder="请输入目标查询地点的纬度数值" autocomplete="off" />
+				</div>
+				<div class="search_icon">
+					<button id="button" type="submit" />
+				</div>
+			</form>
+		</div>
+	  	
+	  	<div style="height:30px;"></div>
+	  
+	  	<div id="chinaMap" style="width:1200px; height:850px; margin:0 auto;"></div>
+		
+		<div style="height:30px;"></div>
+		
+		<section class="map">
+			<div style="text-align: center;">
+				<p style="margin: 35px auto 0px auto; color:darkgray; font-size:14px;">左上角查看大图进入谷歌地图，在想要查询的地点上右键选择“这儿有什么”，可获取该点的经纬度信息（其格式为：纬度,经度）</p>
+			</div>
+	        <div class="container">
+	            <div class="row">
+	                <div class="col-md-12">
+	                    <div id="map">
+	                        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d7895.485196115994!2d103.85995441789784!3d1.2880401763270322!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x7fb4e58ad9cd826e!2sSingapore+Flyer!5e0!3m2!1sen!2sth!4v1505825620371" width="100%" height="500" frameborder="0" style="border:0" allowfullscreen></iframe>
+	                    </div>
+	                </div>
+	            </div>
+	        </div>
+	  	</section>
+	  	
+	  	<div class="col-md-12 back">
+            <a href="#" class="scroll-top">
+               	<div class="primary-button">Back To Top&nbsp;&nbsp;<span class="icon iconfont">&#xe60c;</span></div>
+            </a>
+        </div>
+	   
+	   	<footer>
+            <div style="color:white; margin:0 auto; font-size:12px; position:relative; top:45px;"><span>Copyright&nbsp;©&nbsp;Group Yamaguchi</span></div> 
+	    </footer>
+	    
+	    <script>
+			var chinaMap = echarts.init(document.getElementById('chinaMap'));
+			var geoCoordMap = {
+		    	"辽宁":[123.429092,41.796768],
+		      	"吉林":[125.324501,43.886841],
+		      	"黑龙江":[126.642464,45.756966],
+		      	"北京":[116.405289,39.904987],
+		      	"天津":[117.190186,39.125595],
+		      	"内蒙古":[111.751990,40.841490],
+		      	"宁夏":[106.232480,38.486440],
+		      	"山西":[112.549248,37.857014],
+		      	"河北":[114.502464,38.045475],
+		      	"山东":[117.000923,36.675808],
+		      	"河南":[113.665413,34.757977],
+		      	"陕西":[108.948021,34.263161],
+		      	"湖北":[114.298569,30.584354],
+		      	"江苏":[118.76741,32.041546],
+		      	"安徽":[117.283043,31.861191],
+		      	"上海":[121.472641,31.231707],
+		      	"湖南":[112.982277,28.19409],
+		      	"江西":[115.892151,28.676493],
+		      	"浙江":[120.15358,30.287458],
+		      	"福建":[119.306236,26.075302],
+		      	"广东":[113.28064,23.125177],
+		      	"台湾":[121.5200760,25.0307240],
+		      	"海南":[110.199890,20.044220],
+		      	"广西":[108.320007,22.82402],
+		      	"重庆":[106.504959,29.533155],
+		      	"云南":[102.71225,25.040609],
+		      	"贵州":[106.713478,26.578342],
+      			"四川":[104.065735,30.659462],
+      			"甘肃":[103.834170,36.061380],
+      			"青海":[101.777820,36.617290],
+      			"西藏":[91.11450,29.644150],
+      			"新疆":[87.616880,43.826630],
+      			"香港":[114.165460,22.275340],
+      			"澳门":[113.549130,22.198750]
+			};
+			chinaMap.setOption({
+				title: {
+		            text: '全国省会城市经纬度查询',
+		            textStyle: {
+		            	color: 'white',
+		            	fontSize: 28,
+		            	fontFamily: '华文新魏'
+		            },
+		            left: 'center',
+		            top: '80'
+		       	},
+		       	tooltip: {
+			        formatter: function(params, ticket, callback) {
+			            return geoCoordMap[params.name]
+			        }
+			    },
+			    series: [{
+			        type: 'map',
+			        map: 'china',
+			        label: {
+			        	normal: {
+			        		show: true,
+			        		textStyle: {
+			        			color: "white",//原字体
+			        			fontSize: 15,
+			        		}
+			        	},
+			        	emphasis: {
+			        		show: true,
+			        		textStyle: {
+			        			color: "orangered",//悬停字体
+			        		}
+			        	}
+			        },
+			        aspectScale: 0.75,
+			        zoom: 1.2,
+			        itemStyle: {
+			        	normal: {
+			        		borderWidth: .5,
+			        		borderColor: "lightskyblue",//原边界
+			        		areaColor: "mediumslateblue",//原背景
+			        	},
+			        	emphasis: {
+			        		borderWidth: .5,
+			        		borderColor: "lightskyblue",//悬停边界
+			        		areaColor: "white",//悬停背景
+			        	}
+			        },
+			        markPoint : {
+		                symbol:'pin',
+		                symbolSize : function (v){
+		                    return 20
+		                },
+		                effect : {
+		                    show: true,
+		                    shadowBlur : 0
+		                },
+		                itemStyle:{
+		                    normal:{
+		                        label:{show:false},
+		                		color: 'red',
+		                    }
+		                },
+		                data:[
+		                {name: '北京', coord: [116.405289,39.904987] },
+			            {name: '天津', coord: [117.190186,39.125595] },
+			            {name: '上海', coord: [121.472641,31.231707] },
+			            {name: '重庆', coord: [106.504959,29.533155] },
+			            {name: '石家庄', coord: [114.502464,38.045475] },
+			            {name: '郑州', coord: [113.665413,34.757977] },
+			            {name: '昆明', coord: [102.71225,25.040609] },
+			            {name: '沈阳', coord: [123.429092,41.796768] },
+			            {name: '哈尔滨', coord: [126.642464,45.756966] },
+			            {name: '长沙', coord: [112.982277,28.19409] },
+			            {name: '合肥', coord: [117.283043,31.861191] },
+			            {name: '济南', coord: [117.000923,36.675808] },
+			            {name: '乌鲁木齐', coord: [87.616880,43.826630] },
+			            {name: '南京', coord: [118.76741,32.041546] },
+			            {name: '杭州', coord: [120.15358,30.287458] },
+			            {name: '南昌', coord: [115.892151,28.676493] },
+			            {name: '武汉', coord: [114.298569,30.584354] },
+			            {name: '南宁', coord: [108.320007,22.82402] },
+			            {name: '兰州', coord: [103.834170,36.061380] },
+			            {name: '太原', coord: [112.549248,37.857014] },
+			            {name: '呼和浩特', coord: [111.751990,40.841490] },
+			            {name: '西安', coord: [108.948021,34.263161] },
+			            {name: '长春', coord: [125.324501,43.886841] },
+			            {name: '福州', coord: [119.306236,26.075302] },
+			            {name: '贵阳', coord: [106.713478,26.578342] },
+			            {name: '广州', coord: [113.28064,23.125177] },
+			            {name: '西宁', coord: [101.777820,36.617290] },
+			            {name: '拉萨', coord: [91.11450,29.644150] },
+			            {name: '成都', coord: [104.065735,30.659462] },
+			            {name: '银川', coord: [106.232480,38.486440] },
+			            {name: '海口', coord: [110.199890,20.044220] },
+			            {name: '台北', coord: [121.5200760,25.0307240] },
+			            {name: '香港', coord: [114.165460,22.275340] },
+			            {name: '澳门', coord: [113.549130,22.198750] }],
+		            }
+			    }]
+			});
+			window.addEventListener("resize", function(){
+				chinaMap.resize();
+			});
+		</script>
+		
+		<script src="js/mo.min.js"></script>
+		<script src="js/mojs-player.min.js"></script>
+		<script>
+			'use strict';
+			
+			var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) {if (window.CP.shouldStopExecution(2)){break;} var source = arguments[i]; for (var key in source) {if (window.CP.shouldStopExecution(1)){break;} if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } }
+			window.CP.exitedLoop(1);
+			 }
+			window.CP.exitedLoop(2);
+			 return target; };
+			
+			var OPTS = {
+			    fill: 'none',
+			    radius: 25,
+			    strokeWidth: { 50: 0 },
+			    scale: { 0: 1 },
+			    angle: { 'rand(-35, -70)': 0 },
+			    duration: 500,
+			    left: 0,
+			    top: 0,
+			    easing: 'cubic.out'
+			};
+			
+			var circle1 = new mojs.Shape(_extends({}, OPTS, {
+			    stroke: '#FF8966'
+			}));
+			
+			var circle2 = new mojs.Shape(_extends({}, OPTS, {
+			    radius: { 0: 15 },
+			    strokeWidth: { 30: 0 },
+			    stroke: '#E5446D',
+			    delay: 'rand(75, 150)'
+			}));
+			
+			document.addEventListener('click', function (e) {
+			    circle1.tune({ x: e.pageX, y: e.pageY }).replay();
+			
+			    circle2.tune({ x: e.pageX, y: e.pageY }).replay();
+			});
+		</script>
+	    
+	</body>
+</html>
